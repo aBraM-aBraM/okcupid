@@ -1,7 +1,7 @@
-import sys
-
-from okcupid.api import OkCupidClient # noqa E402
+from okcupid.api import OkCupidClient  # noqa E402
 
 if __name__ == '__main__':
-    my_client = OkCupidClient()
-    # print(my_client.fetch(STACK_MENU_QUERY, OPERATION_TO_BODY[STACK_MENU_QUERY]).text)
+    client = OkCupidClient()
+    client.stack_menu_query()
+    target_user = client.stack_matches[0]
+    client.send_msg(target_user, "Hello World!")
