@@ -15,13 +15,18 @@ class OkCupidClient:
     def __init__(self):
         self._client = httpx.Client()
         self.stack_matches: list[User] = []
+        self.likes_remaining: int = -1
+        self._stacks: list[dict] = []
         self._stack_menu_query()
 
     def _stack_menu_query(self):
         # raw_data = self.post_operation("StacksMenuQuery",
         #                       """{"operationName":"StacksMenuQuery","variables":{"includeProfileDetails":false},"query":"query StacksMenuQuery($includeProfileDetails: Boolean = false ) { me { __typename id stacks { __typename ...ApolloDoubleTakeStack } likesCap { __typename ...ApolloLikesCap } hasPhotos ...ApolloAdInfo } }  fragment ProfilePhotoComment on ProfileCommentPhoto { type photo { original square800 } }  fragment ProfileEssayComment on ProfileCommentEssay { type essayText essayTitle }  fragment Details on User { children identityTags relationshipStatus relationshipType drinking pets weed ethnicity smoking politics bodyType height astrologicalSign diet knownLanguages genders orientations pronounCategory customPronouns occupation { title employer status } education { level school { id name } } religion { value modifier } globalPreferences { relationshipType { values } connectionType { values } gender { values } } }  fragment DoubleTakeStackUser on StackMatch { stream targetLikesSender match { matchPercent targetLikes targetLikeViaSpotlight targetLikeViaSuperBoost firstMessage { attachments { __typename ...ProfilePhotoComment ...ProfileEssayComment } text id } user { __typename id badges { name } ...Details @include(if: $includeProfileDetails) photos { id caption width height crop { upperLeftX upperLeftY lowerRightX lowerRightY } original original558x800 square400 square100 } userLocation { publicName } essaysWithUniqueIds { id groupId title processedContent } displayname age isOnline } targetVote senderVote } profileHighlights { __typename ... on QuestionHighlight { id question answer explanation } ... on PhotoHighlight { id caption url } } hasSuperlikeRecommendation selfieVerifiedStatus }  fragment DoubleTakeFirstPartyAd on FirstPartyAd { id }  fragment DoubleTakeThirdPartyAd on ThirdPartyAd { ad }  fragment PromotedQuestions on PromotedQuestionPrompt { promotedQuestionId }  fragment ApolloDoubleTakeStack on Stack { id status expireTime votesRemaining badge data { __typename ...DoubleTakeStackUser ...DoubleTakeFirstPartyAd ...DoubleTakeThirdPartyAd ...PromotedQuestions } }  fragment ApolloLikesCap on LikesCap { likesCapTotal likesRemaining viewCount resetTime }  fragment ApolloAdInfo on User { age userLocation { publicName } binaryGenderLetter }"}""").text
-        with open(consts.RESOURCES_DIR / "data.json", encoding="utf8") as rr:
+        with open(consts.RESOURCES_DIR / "stack_menu_query.json", encoding="utf8") as rr:
             raw_data = rr.read()
+        self.parse_stack_menu_query(raw_data)
+
+    def parse_stack_menu_query(self, raw_data: str):
         data = json.loads(raw_data)["data"]["me"]
         self.likes_remaining = data["likesCap"]["likesRemaining"]
         stacks = data["stacks"]
@@ -29,8 +34,7 @@ class OkCupidClient:
             stack["data"] = [stack_match for stack_match in stack["data"]
                              if stack_match["__typename"] == "StackMatch"]
 
-        order = ["SUPERLIKES", "JUST_FOR_YOU", "MATCH_PERCENTAGE", "STANDOUTS", "OUT_FOR_THE_DAY", "PENPAL"]
-        self._stacks = sorted(stacks, key=lambda d: order.index(d["id"]))
+        self._stacks = sorted(stacks, key=lambda d: consts.STACK_ORDER.index(d["id"]))
 
         self.stack_matches = []
         for stack in self._stacks:
