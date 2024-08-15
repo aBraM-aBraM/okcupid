@@ -1,7 +1,7 @@
 import json
 import logging
 import sys
-from datetime import datetime
+import time
 
 
 class JsonFormatter(logging.Formatter):
@@ -9,16 +9,15 @@ class JsonFormatter(logging.Formatter):
         log_record = {
             'message': record.getMessage(),
             'timestamp': self.formatTime(record),
-            'extras': record.__dict__.get('extra', {})
         }
         return json.dumps(log_record)
 
 
 def setup_logger(logger_name: str) -> logging.Logger:
     stdout_handler = logging.StreamHandler(sys.stdout)
-    file_handler = logging.FileHandler(datetime.now().strftime("%d_%m_%y-%H:%M:%S-okcupid.json"))
+    file_handler = logging.FileHandler(time.strftime("%Y_%m_%d-%H_%M_%S-okcupid.json"))
 
-    stdout_handler.setFormatter(logging.Formatter('%(message)s'))
+    stdout_handler.setFormatter(logging.Formatter("%(message)s"))
     file_handler.setFormatter(JsonFormatter())
 
     logger = logging.getLogger(logger_name)
