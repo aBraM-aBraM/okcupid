@@ -2,7 +2,7 @@ services:
   okcupid:
     build: .
     volumes:
-      - ./.session:/app/.session
-      - ./okcupid.json:/app/okcupid.json
-      - ./logs:/app/logs
+      - ${SESSION_FILE}:/app/.session
+      - ${CONFIG_FILE}:/app/okcupid.json
+      - ${LOGS_DIR}:/app/logs
     command: /app/venv/bin/python3 main.py --session ./.session
