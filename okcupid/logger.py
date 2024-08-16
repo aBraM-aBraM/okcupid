@@ -19,9 +19,7 @@ def setup_logger(logger_name: str, log_dir: Path | str) -> logging.Logger:
         log_dir = consts.PROJECT_DIR / log_dir
     log_dir.mkdir(exist_ok=True)
 
-    file_handler = logging.FileHandler(
-        log_dir / time.strftime("%Y_%m_%d-%H_%M_%S-okcupid.json")
-    )
+    file_handler = logging.FileHandler(log_dir / time.strftime("%Y_%m_%d-okcupid.json"))
     file_handler.setFormatter(formatter)
 
     logger = logging.getLogger(logger_name)
