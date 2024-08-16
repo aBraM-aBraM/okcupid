@@ -4,4 +4,5 @@ services:
     volumes:
       - ./.session:/app/.session
       - ./okcupid.json:/app/okcupid.json
+      - ./logs:/app/logs
     command: /app/venv/bin/python3 main.py --session ./.session

@@ -82,7 +82,12 @@ class OkCupidClient:
 """
         self._logger.info(
             "sending message",
-            extra=dict(dst_user=user.name, send_msg=msg, dst_id=user.user_id),
+            extra=dict(
+                user_name=user.name,
+                send_msg=msg,
+                ruse_id=user.user_id,
+                user_photos=user.photos,
+            ),
         )
         response = self.post_operation("SendMessage", body)
         return response
