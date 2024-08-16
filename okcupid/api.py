@@ -17,13 +17,15 @@ OPERATION_TO_BODY = {
 
 
 class OkCupidClient:
-    def __init__(self) -> None:
+    def __init__(self, session: str) -> None:
         self._client = httpx.Client()
+        self._session = session
+
         self.stack_matches: list[User] = []
         self.likes_remaining: int = -1
         self._stacks: list[dict] = []
-        self._logger = setup_logger(__name__, config.get("log_dir"))
 
+        self._logger = setup_logger(__name__, config.get("log_dir"))
         self._logger.setLevel(os.getenv("RUN_MODE", logging.INFO))
 
     def stack_menu_query(self):
@@ -94,7 +96,7 @@ class OkCupidClient:
                 "user-agent": "Android 91.3.0",
                 "content-type": "application/json",
             },
-            cookies={"session": "10580259781379019888%3A8809685390191615780"},
+            cookies={"session": self._session},
             content=body,
         )
         if response.is_error:
