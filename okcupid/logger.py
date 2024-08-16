@@ -1,24 +1,26 @@
-import json
 import logging
+from pythonjsonlogger import jsonlogger
 import sys
 import time
+from pathlib import Path
+from okcupid import consts
 
-
-class JsonFormatter(logging.Formatter):
-    def format(self, record):
-        log_record = {
-            'message': record.getMessage(),
-            'timestamp': self.formatTime(record),
-        }
-        return json.dumps(log_record)
-
-
-def setup_logger(logger_name: str) -> logging.Logger:
+def setup_logger(logger_name: str, log_dir: Path | str) -> logging.Logger:
+    formatter = jsonlogger.JsonFormatter(timestamp=True)
+    
     stdout_handler = logging.StreamHandler(sys.stdout)
-    file_handler = logging.FileHandler(time.strftime("%Y_%m_%d-%H_%M_%S-okcupid.json"))
+    stdout_handler.setFormatter(formatter)
 
-    stdout_handler.setFormatter(logging.Formatter("%(message)s"))
-    file_handler.setFormatter(JsonFormatter())
+    if isinstance(log_dir, str):
+        log_dir = Path(log_dir)
+        
+    if not log_dir.is_absolute:
+        log_dir = consts.PROJECT_DIR / log_dir
+    log_dir.mkdir(exist_ok=True)
+
+    file_handler = logging.FileHandler(log_dir / time.strftime("%Y_%m_%d-%H_%M_%S-okcupid.json"))
+    file_handler.setFormatter(formatter)
+
 
     logger = logging.getLogger(logger_name)
     logger.addHandler(stdout_handler)

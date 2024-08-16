@@ -7,6 +7,8 @@ from httpx import Response
 
 from okcupid import consts, logger
 from okcupid.models import User
+from okcupid.logger import setup_logger
+from okcupid.cfg import config
 
 STACK_MENU_QUERY = "StacksMenuQuery"
 OPERATION_TO_BODY = {
@@ -20,7 +22,7 @@ class OkCupidClient:
         self.stack_matches: list[User] = []
         self.likes_remaining: int = -1
         self._stacks: list[dict] = []
-        self._logger = logger.setup_logger(__name__)
+        self._logger = setup_logger(__name__, config.get("log_dir"))
 
         self._logger.setLevel(os.getenv("RUN_MODE", logging.INFO))
 
@@ -31,7 +33,7 @@ class OkCupidClient:
             """{"operationName":"StacksMenuQuery","variables":{"includeProfileDetails":false},"query":"query StacksMenuQuery($includeProfileDetails: Boolean = false ) { me { __typename id stacks { __typename ...ApolloDoubleTakeStack } likesCap { __typename ...ApolloLikesCap } hasPhotos ...ApolloAdInfo } }  fragment ProfilePhotoComment on ProfileCommentPhoto { type photo { original square800 } }  fragment ProfileEssayComment on ProfileCommentEssay { type essayText essayTitle }  fragment Details on User { children identityTags relationshipStatus relationshipType drinking pets weed ethnicity smoking politics bodyType height astrologicalSign diet knownLanguages genders orientations pronounCategory customPronouns occupation { title employer status } education { level school { id name } } religion { value modifier } globalPreferences { relationshipType { values } connectionType { values } gender { values } } }  fragment DoubleTakeStackUser on StackMatch { stream targetLikesSender match { matchPercent targetLikes targetLikeViaSpotlight targetLikeViaSuperBoost firstMessage { attachments { __typename ...ProfilePhotoComment ...ProfileEssayComment } text id } user { __typename id badges { name } ...Details @include(if: $includeProfileDetails) photos { id caption width height crop { upperLeftX upperLeftY lowerRightX lowerRightY } original original558x800 square400 square100 } userLocation { publicName } essaysWithUniqueIds { id groupId title processedContent } displayname age isOnline } targetVote senderVote } profileHighlights { __typename ... on QuestionHighlight { id question answer explanation } ... on PhotoHighlight { id caption url } } hasSuperlikeRecommendation selfieVerifiedStatus }  fragment DoubleTakeFirstPartyAd on FirstPartyAd { id }  fragment DoubleTakeThirdPartyAd on ThirdPartyAd { ad }  fragment PromotedQuestions on PromotedQuestionPrompt { promotedQuestionId }  fragment ApolloDoubleTakeStack on Stack { id status expireTime votesRemaining badge data { __typename ...DoubleTakeStackUser ...DoubleTakeFirstPartyAd ...DoubleTakeThirdPartyAd ...PromotedQuestions } }  fragment ApolloLikesCap on LikesCap { likesCapTotal likesRemaining viewCount resetTime }  fragment ApolloAdInfo on User { age userLocation { publicName } binaryGenderLetter }"}""",
         ).text
         self.parse_stack_menu_query(raw_data)
-        self._logger.info(f"query finished! {self.likes_remaining=} stack_match_count={len(self.stack_matches)}")
+        self._logger.info(f"query finished!", extra=dict(likes_remaining=self.likes_remaining, stack_match_count=len(self.stack_matches)))
 
     def parse_stack_menu_query(self, raw_data: str):
         data = json.loads(raw_data)["data"]["me"]
@@ -70,8 +72,7 @@ class OkCupidClient:
         body = f"""
     {{"operationName":"SendMessage","variables":{{"input":{{"text":"{msg}","targetId":"{user.user_id}","gif":null,"profileComment":{{"essay":{{"id":"0","text":"{msg}"}}}}}}}},"query":"mutation SendMessage($input: ConversationMessageSendInput!) {{ conversationMessageSend(input: $input) {{ success nway messageId threadId adTrigger ratingTrigger }} }}"}}
 """
-
-        self._logger.info(f"sending message \"{msg}\" to {user.name} ({user.user_id})")
+        self._logger.info(f"sending message", extra=dict(dst_user=user.name, send_msg=msg, dst_id=user.user_id))
         response = self.post_operation("SendMessage", body)
         return response
 
