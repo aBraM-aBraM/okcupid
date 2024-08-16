@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 # Set the working directory
 WORKDIR /app
-COPY ./okcupid /app/
+COPY ./okcupid /app/okcupid
 COPY ./main.py /app/
 
 # Copy the requirements file into the container

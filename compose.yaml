@@ -1,0 +1,7 @@
+services:
+  okcupid:
+    build: .
+    volumes:
+      - ./.session:/app/.session
+      - ./okcupid.json:/app/okcupid.json
+    command: /app/venv/bin/python3 main.py --session ./.session
