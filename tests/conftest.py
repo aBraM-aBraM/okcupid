@@ -2,6 +2,7 @@ import pytest
 from okcupid import consts
 from okcupid.api import OkCupidClient
 
+
 @pytest.fixture(scope="module")
 def stack_data_query_data() -> str:
     with open(consts.RESOURCES_DIR / "stack_menu_query.json") as stack_menu_query_fd:
