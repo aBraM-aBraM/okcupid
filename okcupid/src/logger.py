@@ -3,7 +3,7 @@ from pythonjsonlogger import jsonlogger
 import sys
 import time
 from pathlib import Path
-from okcupid import consts
+from src import consts
 
 
 def setup_logger(logger_name: str, log_dir: Path | str) -> logging.Logger:

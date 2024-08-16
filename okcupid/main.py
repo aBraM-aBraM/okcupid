@@ -1,7 +1,7 @@
-from okcupid.api import OkCupidClient
-from okcupid.logger import setup_logger
-from okcupid.cfg import config
-from okcupid import consts
+from src.api import OkCupidClient
+from src.logger import setup_logger
+from src.cfg import config
+from src import consts
 import click
 from pathlib import Path
 import logging

@@ -5,15 +5,20 @@ import os
 import httpx
 from httpx import Response
 
-from okcupid import consts
-from okcupid.models import User
-from okcupid.logger import setup_logger
-from okcupid.cfg import config
+from src.retry import retry
+from src import consts
+from src.models import User
+from src.logger import setup_logger
+from src.cfg import config
 
 STACK_MENU_QUERY = "StacksMenuQuery"
 OPERATION_TO_BODY = {
     STACK_MENU_QUERY: """{"operationName":"StacksMenuQuery","variables":{"includeProfileDetails":false},"query":"query StacksMenuQuery($includeProfileDetails: Boolean = false ) { me { __typename id stacks { __typename ...ApolloDoubleTakeStack } likesCap { __typename ...ApolloLikesCap } hasPhotos ...ApolloAdInfo } }  fragment ProfilePhotoComment on ProfileCommentPhoto { type photo { original square800 } }  fragment ProfileEssayComment on ProfileCommentEssay { type essayText essayTitle }  fragment Details on User { children identityTags relationshipStatus relationshipType drinking pets weed ethnicity smoking politics bodyType height astrologicalSign diet knownLanguages genders orientations pronounCategory customPronouns occupation { title employer status } education { level school { id name } } religion { value modifier } globalPreferences { relationshipType { values } connectionType { values } gender { values } } }  fragment DoubleTakeStackUser on StackMatch { stream targetLikesSender match { matchPercent targetLikes targetLikeViaSpotlight targetLikeViaSuperBoost firstMessage { attachments { __typename ...ProfilePhotoComment ...ProfileEssayComment } text id } user { __typename id badges { name } ...Details @include(if: $includeProfileDetails) photos { id caption width height crop { upperLeftX upperLeftY lowerRightX lowerRightY } original original558x800 square400 square100 } userLocation { publicName } essaysWithUniqueIds { id groupId title processedContent } displayname age isOnline } targetVote senderVote } profileHighlights { __typename ... on QuestionHighlight { id question answer explanation } ... on PhotoHighlight { id caption url } } hasSuperlikeRecommendation selfieVerifiedStatus }  fragment DoubleTakeFirstPartyAd on FirstPartyAd { id }  fragment DoubleTakeThirdPartyAd on ThirdPartyAd { ad }  fragment PromotedQuestions on PromotedQuestionPrompt { promotedQuestionId }  fragment ApolloDoubleTakeStack on Stack { id status expireTime votesRemaining badge data { __typename ...DoubleTakeStackUser ...DoubleTakeFirstPartyAd ...DoubleTakeThirdPartyAd ...PromotedQuestions } }  fragment ApolloLikesCap on LikesCap { likesCapTotal likesRemaining viewCount resetTime }  fragment ApolloAdInfo on User { age userLocation { publicName } binaryGenderLetter }"}"""
 }
+
+
+class OkCupidRequestFail(Exception):
+    pass
 
 
 class OkCupidClient:
@@ -92,6 +97,7 @@ class OkCupidClient:
         response = self.post_operation("SendMessage", body)
         return response
 
+    @retry(OkCupidRequestFail)
     def post_operation(self, operation: str, body: str) -> Response:
         response = self._client.request(
             method="POST",
@@ -106,8 +112,8 @@ class OkCupidClient:
         )
         if response.is_error:
             self._logger.error(
-                f'"{operation}" request failed!\n'
-                f"{response.content=}\n"
-                f"{response.status_code=}"
+                f"{operation} request failed!",
+                extra=dict(status_code=response.status_code, content=response.content),
             )
+            raise OkCupidRequestFail()
         return response
